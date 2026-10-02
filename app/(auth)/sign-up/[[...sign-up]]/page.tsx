@@ -25,7 +25,7 @@ export default function SignUpPage() {
       <div className="hidden lg:flex lg:w-1/2 flex-col bg-surface border-r border-border p-12">
         <div className="flex items-center gap-2.5">
           <div className="h-7 w-7 rounded-lg bg-brand" />
-          <span className="text-copy-primary font-semibold text-sm tracking-tight">Ghost AI</span>
+          <span className="text-copy-primary font-semibold text-sm tracking-tight">StackCanvas</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center max-w-sm">
@@ -33,7 +33,7 @@ export default function SignUpPage() {
             Design systems at the speed of thought.
           </h1>
           <p className="text-copy-secondary text-sm leading-relaxed mb-10">
-            Describe your architecture in plain English. Ghost AI maps it to a shared canvas your whole team can refine in real time.
+            Describe your architecture in plain English. StackCanvas maps it to a shared canvas your whole team can refine in real time.
           </p>
           <ul className="space-y-6">
             {features.map(({ icon: Icon, title, description }) => (
@@ -50,7 +50,7 @@ export default function SignUpPage() {
           </ul>
         </div>
 
-        <p className="text-copy-faint text-xs">© 2026 Ghost AI. All rights reserved.</p>
+        <p className="text-copy-faint text-xs">© 2026 StackCanvas. All rights reserved.</p>
       </div>
 
       <div className="flex flex-1 items-center justify-center p-8">

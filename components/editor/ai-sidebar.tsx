@@ -24,7 +24,7 @@ import { useProjectSpecs } from "@/hooks/use-project-specs";
 import { downloadSpecFile, type ProjectSpecListItem } from "@/lib/specs";
 import { SpecPreviewModal } from "./spec-preview-modal";
 
-const AI_SENDER_NAME = "Ghost AI";
+const AI_SENDER_NAME = "StackCanvas";
 
 const STARTER_CHIPS = [
   "Design an e-commerce backend",
@@ -456,7 +456,7 @@ export function AISidebar({ isOpen, onClose, projectId }: AISidebarProps) {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-copy-muted">Collaborate with Ghost AI</p>
+              <p className="text-xs text-copy-muted">Collaborate with StackCanvas</p>
             </div>
             <Button
               variant="ghost"
@@ -494,7 +494,7 @@ export function AISidebar({ isOpen, onClose, projectId }: AISidebarProps) {
                 <div className="flex flex-col items-center gap-4 px-4 py-8 text-center">
                   <BotMessageSquare className="h-8 w-8 text-ai-text/60" />
                   <div>
-                    <p className="text-sm font-medium text-copy-primary">Ghost AI Architect</p>
+                    <p className="text-sm font-medium text-copy-primary">StackCanvas Architect</p>
                     <p className="mt-1 text-xs text-copy-muted">
                       Describe your system and I&apos;ll design the architecture on the canvas.
                     </p>

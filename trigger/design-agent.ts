@@ -74,7 +74,7 @@ export const designAgentTask = schemaTask({
     const lb = getLiveblocks();
 
     await broadcast(lb, roomId, { type: "AI_THINKING_START" });
-    await broadcast(lb, roomId, { type: "AI_STATUS", message: "Ghost AI is analyzing your request…" });
+    await broadcast(lb, roomId, { type: "AI_STATUS", message: "StackCanvas is analyzing your request…" });
 
     try {
       const apiKey = process.env.GOOGLE_AI_API_KEY;
@@ -83,7 +83,7 @@ export const designAgentTask = schemaTask({
       }
       const google = createGoogleGenerativeAI({ apiKey });
 
-      await broadcast(lb, roomId, { type: "AI_STATUS", message: "Ghost AI is designing your architecture…" });
+      await broadcast(lb, roomId, { type: "AI_STATUS", message: "StackCanvas is designing your architecture…" });
 
       const colorHints = NODE_COLORS.map(
         (c, i) => `${i}: fill ${c.fill} / text ${c.text}`
