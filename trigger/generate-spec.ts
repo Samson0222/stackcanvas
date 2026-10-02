@@ -77,7 +77,7 @@ export const generateSpecTask = schemaTask({
       });
 
       const { text } = await generateText({
-        model: google("gemini-2.5-flash"),
+        model: google("gemini-3.5-flash"),
         system: `You are a senior software architect writing a technical specification in Markdown for a system design canvas.
                 Use the provided canvas graph (nodes and edges) and conversation history as context. 
                 Produce a clear, well-organised Markdown document with sections such as Overview, Components, Data Flow, and Key Considerations. 

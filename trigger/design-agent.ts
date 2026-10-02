@@ -90,7 +90,7 @@ export const designAgentTask = schemaTask({
       ).join(", ");
 
       const { object: design } = await generateObject({
-        model: google("gemini-2.5-flash"),
+        model: google("gemini-3.5-flash"),
         system: `You are an expert system architect designing a real-time collaborative canvas layout.
 
 Shapes: ${NODE_SHAPES.join(", ")}
