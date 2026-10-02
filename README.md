@@ -2,8 +2,6 @@
 
 StackCanvas is a real-time collaborative system design workspace. Describe a system in plain English, watch an AI agent map it onto a shared canvas, refine the architecture with collaborators, and generate a technical specification from the resulting graph.
 
-**Live demo:** https://ghost-ai-git-development-samson0222s-projects.vercel.app
-
 ## Features
 
 - **Collaborative canvas** — real-time shared canvas with live cursors, presence, and node/edge editing (Liveblocks + React Flow).
