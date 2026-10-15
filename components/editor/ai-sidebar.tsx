@@ -21,7 +21,7 @@ import type { generateSpecTask } from "@/trigger/generate-spec";
 import { aiStatusFeedPayloadSchema, chatMessageSchema, type ChatMessageData } from "@/types/tasks";
 import { useProjectSpecs } from "@/hooks/use-project-specs";
 import { useAiChatFeed } from "@/hooks/use-ai-chat-feed";
-import { isQuotaErrorMessage, QUOTA_ERROR_USER_MESSAGE } from "@/lib/ai-errors";
+import { describeAiFailure } from "@/lib/ai-errors";
 import { downloadSpecFile, type ProjectSpecListItem } from "@/lib/specs";
 import { SpecPreviewModal } from "./spec-preview-modal";
 
@@ -68,11 +68,7 @@ function RunSubscriber({
       }
       onComplete();
     } else if (run.status === "FAILED" || run.status === "CRASHED") {
-      onMessage(
-        isQuotaErrorMessage(run.error?.message)
-          ? QUOTA_ERROR_USER_MESSAGE
-          : "Design generation failed. Please try again."
-      );
+      onMessage(describeAiFailure(run.error?.message, "Design generation failed. Please try again."));
       onComplete();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,11 +101,7 @@ function SpecRunSubscriber({
         onError("Spec generation completed but returned no result.");
       }
     } else if (run.status === "FAILED" || run.status === "CRASHED") {
-      onError(
-        isQuotaErrorMessage(run.error?.message)
-          ? QUOTA_ERROR_USER_MESSAGE
-          : "Spec generation failed. Please try again."
-      );
+      onError(describeAiFailure(run.error?.message, "Spec generation failed. Please try again."));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run?.status]);

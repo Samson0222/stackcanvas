@@ -2,7 +2,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { APICallError, RetryError, type LanguageModel } from "ai";
 import { isQuotaErrorMessage } from "@/lib/ai-errors";
 
-const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash";
+const DEFAULT_GEMINI_MODEL = "gemini-4-argon";
 
 // Longest per-minute quota window worth waiting out before retrying a run.
 const MAX_QUOTA_RETRY_DELAY_MS = 120_000;
@@ -91,6 +91,10 @@ export function getQuotaRetryDelayMs(err: unknown): number | null | undefined {
  * quota can't recover in time.
  */
 export function handleGeminiTaskError({ error }: { error: unknown }) {
+  // 402: the Google project's prepaid credits are depleted — no retry can succeed.
+  const cause = RetryError.isInstance(error) ? error.lastError : error;
+  if (APICallError.isInstance(cause) && cause.statusCode === 402) return { skipRetrying: true };
+
   const delayMs = getQuotaRetryDelayMs(error);
   if (delayMs === undefined) return undefined;
   if (delayMs === null) return { skipRetrying: true };
