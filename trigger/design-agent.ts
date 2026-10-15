@@ -1,8 +1,8 @@
 import { schemaTask } from "@trigger.dev/sdk";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { getLiveblocks } from "@/lib/liveblocks";
+import { getQuotaRetryDelayMs, handleGeminiTaskError, withGeminiModel } from "@/lib/ai-model";
 import { NODE_SHAPES, NODE_COLORS } from "@/types/canvas";
 import type { CanvasNode, CanvasEdge, NodeShape } from "@/types/canvas";
 
@@ -53,6 +53,8 @@ const DEFAULT_SIZES: Record<NodeShape, { width: number; height: number }> = {
   hexagon: { width: 140, height: 140 },
 };
 
+const MAX_ATTEMPTS = 3;
+
 type LiveblocksInstance = ReturnType<typeof getLiveblocks>;
 
 async function broadcast(
@@ -67,9 +69,10 @@ export const designAgentTask = schemaTask({
   id: "design-agent",
   maxDuration: 300,
   schema: designAgentPayloadSchema,
-  retry: { maxAttempts: 3, factor: 2, minTimeoutInMs: 1000, maxTimeoutInMs: 10000 },
+  retry: { maxAttempts: MAX_ATTEMPTS, factor: 2, minTimeoutInMs: 1000, maxTimeoutInMs: 10000 },
   queue: { concurrencyLimit: 5 },
-  run: async (payload) => {
+  catchError: handleGeminiTaskError,
+  run: async (payload, { ctx }) => {
     const { prompt, roomId } = payload;
     const lb = getLiveblocks();
 
@@ -77,20 +80,15 @@ export const designAgentTask = schemaTask({
     await broadcast(lb, roomId, { type: "AI_STATUS", message: "StackCanvas is analyzing your request…" });
 
     try {
-      const apiKey = process.env.GOOGLE_AI_API_KEY;
-      if (!apiKey) {
-        throw new Error("GOOGLE_AI_API_KEY environment variable is required");
-      }
-      const google = createGoogleGenerativeAI({ apiKey });
-
       await broadcast(lb, roomId, { type: "AI_STATUS", message: "StackCanvas is designing your architecture…" });
 
       const colorHints = NODE_COLORS.map(
         (c, i) => `${i}: fill ${c.fill} / text ${c.text}`
       ).join(", ");
 
-      const { object: design } = await generateObject({
-        model: google("gemini-3.5-flash"),
+      const { object: design } = await withGeminiModel((model) => generateObject({
+        model,
+        maxRetries: 0,
         system: `You are an expert system architect designing a real-time collaborative canvas layout.
 
 Shapes: ${NODE_SHAPES.join(", ")}
@@ -113,7 +111,7 @@ Layout rules:
   • Create an accurate, clear, well-organised system design.`,
         prompt,
         schema: designSchema,
-      });
+      }));
 
       await broadcast(lb, roomId, {
         type: "AI_STATUS",
@@ -164,9 +162,16 @@ Layout rules:
       return { success: true, nodeCount: canvasNodes.length, edgeCount: canvasEdges.length };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
+      const quotaDelayMs = getQuotaRetryDelayMs(err);
+      const willRetry = quotaDelayMs != null && ctx.attempt.number < MAX_ATTEMPTS;
       await broadcast(lb, roomId, {
         type: "AI_STATUS",
-        message: `Design failed: ${message}`,
+        message:
+          quotaDelayMs === undefined
+            ? `Design failed: ${message}`
+            : willRetry
+              ? `AI rate limit reached — retrying in ${Math.ceil(quotaDelayMs / 1000)}s…`
+              : "Design failed: AI usage limit reached. Try again later.",
       });
       throw err;
     } finally {

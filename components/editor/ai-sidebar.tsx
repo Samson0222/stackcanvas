@@ -13,7 +13,6 @@ import {
   useOthers,
   useUpdateMyPresence,
   useSelf,
-  useFeedMessages,
   useCreateFeedMessage,
 } from "@liveblocks/react";
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
@@ -21,6 +20,8 @@ import type { designAgentTask } from "@/trigger/design-agent";
 import type { generateSpecTask } from "@/trigger/generate-spec";
 import { aiStatusFeedPayloadSchema, chatMessageSchema, type ChatMessageData } from "@/types/tasks";
 import { useProjectSpecs } from "@/hooks/use-project-specs";
+import { useAiChatFeed } from "@/hooks/use-ai-chat-feed";
+import { isQuotaErrorMessage, QUOTA_ERROR_USER_MESSAGE } from "@/lib/ai-errors";
 import { downloadSpecFile, type ProjectSpecListItem } from "@/lib/specs";
 import { SpecPreviewModal } from "./spec-preview-modal";
 
@@ -67,7 +68,11 @@ function RunSubscriber({
       }
       onComplete();
     } else if (run.status === "FAILED" || run.status === "CRASHED") {
-      onMessage("Design generation failed. Please try again.");
+      onMessage(
+        isQuotaErrorMessage(run.error?.message)
+          ? QUOTA_ERROR_USER_MESSAGE
+          : "Design generation failed. Please try again."
+      );
       onComplete();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,12 +105,27 @@ function SpecRunSubscriber({
         onError("Spec generation completed but returned no result.");
       }
     } else if (run.status === "FAILED" || run.status === "CRASHED") {
-      onError("Spec generation failed. Please try again.");
+      onError(
+        isQuotaErrorMessage(run.error?.message)
+          ? QUOTA_ERROR_USER_MESSAGE
+          : "Spec generation failed. Please try again."
+      );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run?.status]);
 
   return null;
+}
+
+function FeedErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+      <p className="text-xs text-copy-muted">Could not load chat.</p>
+      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onRetry}>
+        Retry
+      </Button>
+    </div>
+  );
 }
 
 // The "ai-chat" feed is created server-side in /api/liveblocks-auth before
@@ -152,7 +172,12 @@ export function AISidebar({ isOpen, onClose, projectId }: AISidebarProps) {
 
   // ai-chat Liveblocks feed — created server-side, see AISidebar comment above
   const createFeedMessage = useCreateFeedMessage();
-  const { messages: feedMessages, isLoading: feedLoading, error: feedError } = useFeedMessages("ai-chat");
+  const {
+    messages: feedMessages,
+    isLoading: feedLoading,
+    error: feedError,
+    retry: retryFeed,
+  } = useAiChatFeed();
 
   const handleGenerateSpec = useCallback(async () => {
     if (isGeneratingSpec) return;
@@ -487,9 +512,7 @@ export function AISidebar({ isOpen, onClose, projectId }: AISidebarProps) {
                   <span className="text-xs text-copy-muted">Loading conversation…</span>
                 </div>
               ) : feedError ? (
-                <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                  <p className="text-xs text-copy-muted">Could not load chat. Reload and try again.</p>
-                </div>
+                <FeedErrorState onRetry={retryFeed} />
               ) : !feedMessages || feedMessages.length === 0 ? (
                 <div className="flex flex-col items-center gap-4 px-4 py-8 text-center">
                   <BotMessageSquare className="h-8 w-8 text-ai-text/60" />
@@ -621,9 +644,7 @@ export function AISidebar({ isOpen, onClose, projectId }: AISidebarProps) {
                   <span className="text-xs text-copy-muted">Loading chat…</span>
                 </div>
               ) : feedError ? (
-                <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                  <p className="text-xs text-copy-muted">Could not load chat. Reload and try again.</p>
-                </div>
+                <FeedErrorState onRetry={retryFeed} />
               ) : !feedMessages || feedMessages.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
                   <p className="text-sm font-medium text-copy-primary">Room Chat</p>
