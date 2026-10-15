@@ -1,12 +1,7 @@
 import { defineConfig } from "@trigger.dev/sdk";
 
-const projectRef = process.env.TRIGGER_PROJECT_REF;
-if (!projectRef) {
-  throw new Error("TRIGGER_PROJECT_REF environment variable is required");
-}
-
 export default defineConfig({
-  project: projectRef,
+  project: "proj_ylyxdttppmoiumhtsmjo",
   runtime: 'node',
   dirs: ["./trigger"],
   maxDuration: 3600,

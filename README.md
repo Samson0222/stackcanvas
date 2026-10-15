@@ -69,6 +69,10 @@ BLOB_READ_WRITE_TOKEN=
 
 # Google AI
 GOOGLE_AI_API_KEY=
+# Optional: override the model (default gemini-4-argon) and add a fallback
+# model used when the primary model's quota is exhausted
+GEMINI_MODEL=
+GEMINI_FALLBACK_MODEL=
 ```
 
 ### 3. Set up the database

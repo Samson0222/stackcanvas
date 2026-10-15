@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { schemaTask, metadata } from "@trigger.dev/sdk";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
 import { put } from "@vercel/blob";
 import { z } from "zod";
 import { chatMessageSchema } from "@/types/tasks";
 import prisma from "@/lib/prisma";
+import { handleGeminiTaskError, withGeminiModel } from "@/lib/ai-model";
 
 const canvasNodeSchema = z
   .object({
@@ -52,6 +52,7 @@ export const generateSpecTask = schemaTask({
   id: "generate-spec",
   schema: generateSpecPayloadSchema,
   maxDuration: 300,
+  catchError: handleGeminiTaskError,
   run: async (payload) => {
     const { projectId, nodes, edges, chatHistory } = payload;
 
@@ -72,12 +73,9 @@ export const generateSpecTask = schemaTask({
     try {
       metadata.set("status", "generating");
 
-      const google = createGoogleGenerativeAI({
-        apiKey: process.env.GOOGLE_AI_API_KEY ?? "",
-      });
-
-      const { text } = await generateText({
-        model: google("gemini-2.5-flash"),
+      const { text } = await withGeminiModel((model) => generateText({
+        model,
+        maxRetries: 0,
         system: `You are a senior software architect writing a technical specification in Markdown for a system design canvas.
                 Use the provided canvas graph (nodes and edges) and conversation history as context. 
                 Produce a clear, well-organised Markdown document with sections such as Overview, Components, Data Flow, and Key Considerations. 
@@ -93,7 +91,7 @@ export const generateSpecTask = schemaTask({
             ${chatSummary || "(no conversation)"}
 
             Generate the technical specification now.`,
-      });
+      }));
 
       metadata.set("status", "persisting");
 
